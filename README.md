@@ -1,17 +1,20 @@
 # API для управления библиотекой
 
-Дипломный проект: система для автоматизации работы библиотеки, управления книжным каталогом и отслеживания выдачи книг пользователям.
+Дипломный проект: система для автоматизации работы библиотеки, управления книжным каталогом и отслеживания выдачи книг
+пользователям.
 
 ## Стек технологий
-* **Backend**: Python 3.13 / Django 5.0 / Django Rest Framework (DRF)
+
+* **Backend**: Python 3.13 / Django 4.2 LTS / Django REST Framework (DRF)
 * **База данных**: PostgreSQL
 * **Аутентификация**: JWT (JSON Web Tokens)
 * **Документация**: OpenAPI / Swagger UI (`drf-yasg`)
-* **Контейнеризация**: Docker / Docker Compose
+* **Контейнеризация и WSGI**: Docker / Docker Compose / Gunicorn
 
 ---
 
 ## Структура проекта
+
 * `core/` — Главный модуль настроек проекта (settings, urls).
 * `users/` — Управление пользователями, кастомная модель (вход по Email), роли (Библиотекарь/Читатель).
 * `authors/` — База данных авторов и управление информацией о них.
@@ -20,46 +23,87 @@
 
 ---
 
-## Инструкция по локальному запуску
+## Вариант 1. Запуск через Docker Compose (Рекомендуемый / Production-ready)
 
-### 1. Клонирование и настройка окружения
-```bash
-git clone <https://github.com/roman-boyko-91-hue/diplom>
-python -m venv .venv
-source .venv\Scripts\activate # для Windows
-pip install -r requirements.txt
-```
+Все процессы сборки, применения миграций и запуска под управлением WSGI-сервера **Gunicorn** полностью автоматизированы
+внутри контейнеров.
 
-### 2. Настройка переменных окружения
-Создайте файл `.env` в корневом каталоге проекта по шаблону:
+### 1. Настройка переменных окружения
+
+Создайте файл `.env` в корневом каталоге проекта. Для работы внутри Docker в качестве хоста базы данных укажите имя
+сервиса — `db`:
+
 ```text
 DEBUG=True
-SECRET_KEY=your_secret_key
-DB_NAME=library_db
+SECRET_KEY=
+DB_NAME=library_api
 DB_USER=postgres
-DB_PASSWORD=your_password
-DB_HOST=127.0.0.1
+DB_PASSWORD=
+DB_HOST=db
 DB_PORT=5432
 ```
 
-### 3. Миграции и запуск
+### 2. Сборка и запуск контейнеров
+
+Выполните команду в терминале:
+
 ```bash
-python manage.py makemigrations
+docker compose up -d --build
+```
+
+*Контейнеры соберутся, база данных PostgreSQL развернется автоматически, Django применит миграции и запустит приложение
+на порту 8000.*
+
+---
+
+## Вариант 2. Локальный запуск (Для разработки и тестирования)
+
+### 1. Клонирование и настройка окружения
+
+```bash
+git clone https://github.com/roman-boyko-91-hue/diplom
+cd diplom
+python -m venv .venv
+source .venv/Scripts/activate  # Для Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 2. Настройка локального .env
+
+Для локального запуска вне Docker укажите хост локальной СУБД (например, `localhost` или `127.0.0.1`):
+
+```text
+DB_HOST=127.0.0.1
+```
+
+### 3. Миграции и запуск локального сервера
+
+```bash
 python manage.py migrate
 python manage.py runserver
 ```
-После запуска проект будет доступен по адресу: `http://127.0.0`
 
 ---
 
-## Интерактивная документация API
-После запуска сервера вам доступны следующие эндпоинты автодокументации:
-* **Swagger UI**: `http://127.0.0.8000/swagger/` — интерактивное тестирование всех эндпоинтов (создание книг, авторов, аренда).
+## Доступные адреса и документация API
+
+После успешного запуска (любым из способов) проект доступен по следующим адресам:
+
+* **Главная страница API (Root):** [http://localhost:8000/](http://localhost:8000/)
+* **Панель администратора Django:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
+* **Интерактивная документация Swagger UI:** [http://localhost:8000/swagger/](http://localhost:8000/swagger/) —
+  для тестирования всех эндпоинтов (авторизация, управление книгами, оформление аренды).
 
 ---
 
-## Запуск через Docker
-Сборка через Docker Compose:
+## Тестирование
+
+Запуск комплексного пакета интеграционных автотестов:
+
 ```bash
-docker compose up --build
+# Если запущен локально:
+python manage.py test books
+
+# Если запущен внутри Docker:
+docker compose exec web python manage.py test books
 ```

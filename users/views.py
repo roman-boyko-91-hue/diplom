@@ -15,3 +15,7 @@ class UserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        # Метод всегда возвращает из базы данных ТОЛЬКО текущего авторизованного пользователя
+        return self.request.user
