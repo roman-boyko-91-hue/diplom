@@ -90,6 +90,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Указываем Django использовать нашу модель пользователя
 AUTH_USER_MODEL = 'users.User'
